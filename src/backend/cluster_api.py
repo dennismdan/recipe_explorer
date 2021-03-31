@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.cluster import KMeans
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
@@ -53,6 +53,7 @@ class ClusterAPI:
         self.clusterTopDf: pd.DataFrame = None
         self.edgesDf:pd.DataFrame = None
         self.edgesTopDf:pd.DataFrame = None
+        self.nodeList = None
 
     def cleanData(self, fileName:str)->pd.DataFrame:
         #TODO: possibly for beggining only, low priority
@@ -182,11 +183,12 @@ class ClusterAPI:
 
         subsetNodesDF = subsetNodesDF[["recipeIdA", "edge_weight"]].groupby("recipeIdA").sum()
 
-        nodeList = subsetNodesDF.sort_values(by="edge_weight", ascending=False).head(returnRecipeCount).index.tolist()
+        self.nodeList = subsetNodesDF.sort_values(by="edge_weight", ascending=False).head(returnRecipeCount).index.tolist()
+        self.nodeList.columns = ["RecipeId", "nodeSize"]
 
-        self.clusterTopDf = clusterDf[clusterDf.RecipeId.isin(nodeList)]
+        self.clusterTopDf = clusterDf[clusterDf.RecipeId.isin(self.nodeList)]
 
-        return self.clusterTopDf
+        return self.clusterTopDf, self.nodeList
 
     def getEdgesTop(self):
         if self.clusterTopDf is None:

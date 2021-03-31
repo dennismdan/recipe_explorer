@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import sklearn
 import numpy as np
 import time
 import json
@@ -10,30 +11,54 @@ from streamlit_agraph import agraph, Node, Edge, TripleStore, Config
 #from pyvis.network import Network
 
 from run_time_constants import testDataPath
+from ..backend.cluster_api import ClusterAPI
 
 def app():
+    #TODO: box to enter user input
+    #TODO: submit text button
+    #TODO: Node interaction (click node -> link with some recipe details populates the bottom of the page ?
+    #TODO: Arrange windows:
+    # 1 - left: user input interface,
+    # 2 - center: nodal graph center,
+    # 3 - right: recipe list/ingridients
+    # 4 - bottom link to the page with the recipe ?
 
-  # Set title and user input elements
-  st.title("Recipe Recommender Network")
-  sidebar = st.sidebar
-  middle, rsidebar = st.beta_columns([3, 1])
-  sidebar.title("Choose meal type and ingredients")
-  userIngredients = sidebar.text_input("Input ingredients that should be included in returned recipes:")
-  userInput = sidebar.text_input("Input recipe to use as cluster seed: ")
+    # Set title and user input elements
+    st.title("Recipe Recommender Network")
+    sidebar = st.sidebar
+    middle, rsidebar = st.beta_columns([3, 1])
+    sidebar.title("Enter ingridients or any food related words")
+    sidebar.text("The more detail you add to the ingredients the better your resuls will be")
 
-  # create empty lists for holding nodes and edges for network
-  #net = Network() # place holder for transitioning to pyvis
-  nodes = []
-  edges = []
-  nodeSize = 500
+    # Dennis note: lets keep only one box for user input to simplify implementations, we can add the second one later
+    userIngredientsInput = sidebar.text_input()
+    #TODO: make second box actionable: userInput = sidebar.text_input("Input recipe to use as cluster seed: ")
+    doneButton = sidebar.button("Done")
 
-  # Bring in the initial data
-  tmp = pd.read_csv(testDataPath) # Here is where we would access the data from the backend
-  print('length before filter: ', len(tmp))
+    if doneButton:
+        result = composeClusterApi(userIngredientsInput)
 
-  # filter data for only recipes that contain the user inputs
-  if userIngredients != "":
-      ingredients = userIngredients.split(',')
+        if not result:
+            sidebar.write("Did not find a user input, please add ingredients")
+        else:
+            clusterApi = result
+            sidebar.success('Perfect, results are displayed in the graph')
+
+            updateGraph(clusterApi,middle)
+
+    # create empty lists for holding nodes and edges for network
+    #net = Network() # place holder for transitioning to pyvis
+    nodes = []
+    edges = []
+    nodeSize = 500
+
+    # Bring in the initial data
+    tmp = pd.read_csv(testDataPath) # Here is where we would access the data from the backend
+    print('length before filter: ', len(tmp))
+
+    # filter data for only recipes that contain the user inputs
+    if userIngredientsInput != "":
+      ingredients = userIngredientsInput.split(',')
       ingredients = [i.strip() for i in ingredients]
       contains = [tmp["RecipeIngredientParts"].str.contains(i) for i in ingredients]
       #print(ingredients)
@@ -41,7 +66,7 @@ def app():
       print('length of filtered: ', len(tmp))
 
 
-  if len(tmp) != 0:
+    if len(tmp) != 0:
       edgeList = []
 
       ### Used for loading the data directly from the dictionary output from Orion's clustering script
@@ -95,11 +120,65 @@ def app():
                                  config=config)
             #net.show('testgraph.html') # place holder for transitioning to pyvis
 
+    st.text("Showing recipes based on the following ingredients: {}".format(userIngredientsInput))
 
 
 
+def updateGraph(clusterApi,middle):
+    recipeDf = clusterApi.clusterTopDf
+    edgesDf = clusterApi.edgesTopDf
+    nodeList = clusterApi.nodeList
 
-  st.text("Showing recipes based on the following ingredients: {}".format(userIngredients))
+    nodes, edges = getNodesEdges(recipeDf, edgesDf, nodeList)
+    generateGraph(nodes,edges,middle)
+
+def generateGraph(nodes,edges,middle):
+    # set network configuration
+    config = Config(height=500,
+                    width=700,
+                    nodeHighlightBehavior=True,
+                    highlightColor="#F7A7A6",
+                    directed=False,
+                    collapsible=True,
+                    node={'labelProperty': 'label'},
+                    link={'labelProperty': 'label', 'renderLabel': False}
+                    )
+    # add network to middle column of streamlit canvas
+    with middle:
+        # st.text("Displaying {} cuisine types".format(display_category))
+        return_value = agraph(nodes=nodes,
+                              edges=edges,
+                              config=config)
+
+def composeClusterApi(userIngredientsInput):
+    if (userIngredientsInput is None) or (userIngredientsInput == ""):
+        return False
+
+    try:
+        clusterApi = ClusterAPI(stringInput=userIngredientsInput,
+                                topNrRecipes=10)
+        clusterApi.topRecipeData()
+    except:
+        return False
+
+    return clusterApi
+
+def getNodesEdges(recipeDf,edgesDf,nodeList):
+    nodes = []
+    edges = []
+
+    for index,row in nodeList.iterrows():
+        #TODO: normalize nodeSize
+        id = row["RecipeId"]
+        label = recipeDf[recipeDf.RecipeId == id].Name.tolist()[0]
+        nodes.append(Node(id = id, label = label, size = row["nodeSize"]))
+
+    for index, row in edgesDf.iterrows():
+        edges.append(Edge(source=row["recipeIdA"], target=row["recipeIdB"],linkValue=row["edge_weight"], type="CURVE_SMOOTH"))
+
+    return nodes,edges
+
+
 
 if __name__=='__main__':
     app()
