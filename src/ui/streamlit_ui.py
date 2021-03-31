@@ -9,6 +9,7 @@ import numpy as np
 from streamlit_agraph import agraph, Node, Edge, TripleStore, Config
 #from pyvis.network import Network
 
+from run_time_constants import testDataPath
 
 def app():
 
@@ -27,7 +28,7 @@ def app():
   nodeSize = 500
 
   # Bring in the initial data
-  tmp = pd.read_csv('./cluster_test.csv') # Here is where we would access the data from the backend
+  tmp = pd.read_csv(testDataPath) # Here is where we would access the data from the backend
   print('length before filter: ', len(tmp))
 
   # filter data for only recipes that contain the user inputs
