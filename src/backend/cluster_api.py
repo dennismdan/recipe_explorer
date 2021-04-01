@@ -56,6 +56,7 @@ class ClusterAPI:
         self.clusterTopDf: pd.DataFrame = None
         self.edgesDf:pd.DataFrame = None
         self.edgesTopDf:pd.DataFrame = None
+        self.nodesAndWeights = None
         self.nodeList = None
 
     def cleanData(self, fileName:str)->pd.DataFrame:
@@ -185,13 +186,16 @@ class ClusterAPI:
         subsetNodesDF = self.edgesDf.copy()
 
         subsetNodesDF = subsetNodesDF[["recipeIdA", "edge_weight"]].groupby("recipeIdA").sum()
+        self.nodesAndWeights = subsetNodesDF.sort_values(by="edge_weight", ascending=False).head(returnRecipeCount).copy()
+        #self.nodeList = subsetNodesDF.sort_values(by="edge_weight", ascending=False).head(returnRecipeCount).index.tolist()
+        self.nodeList = self.nodesAndWeights.index.tolist()
 
-        self.nodeList = subsetNodesDF.sort_values(by="edge_weight", ascending=False).head(returnRecipeCount).index.tolist()
-        self.nodeList.columns = ["RecipeId", "nodeSize"]
+        self.nodesAndWeights.reset_index(inplace=True)
+        self.nodesAndWeights.rename(columns = {'recipeIdA':'RecipeId','edge_weight': 'nodeSize'}, inplace=True)
 
         self.clusterTopDf = clusterDf[clusterDf.RecipeId.isin(self.nodeList)]
 
-        return self.clusterTopDf, self.nodeList
+        return self.clusterTopDf, self.nodeList, self.nodesAndWeights
 
     def getEdgesTop(self):
         if self.clusterTopDf is None:
@@ -210,6 +214,7 @@ class ClusterAPI:
         return self.edgesTopDf
 
     def topRecipeData(self)->Tuple[pd.DataFrame,pd.DataFrame,int]:
+
         model = self.pipelineMode
         newRecipe = self.userIngredientInput
         returnRecipeCount = self.returnRecipeCount
