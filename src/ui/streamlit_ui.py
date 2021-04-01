@@ -16,14 +16,15 @@ from ..backend.cluster_api import ClusterAPI
 topNrRecipes = 10
 
 def app():
-    #TODO: box to enter user input
-    #TODO: submit text button
-    #TODO: Node interaction (click node -> link with some recipe details populates the bottom of the page ?
+    #TODO: Node interaction (click node -> link with some recipe details populates the bottom of the page ?)
     #TODO: Arrange windows:
+    #TODO: initial nodegraph... none - just text instructing user to enter recipes
     # 1 - left: user input interface,
     # 2 - center: nodal graph center,
     # 3 - right: recipe list/ingridients
     # 4 - bottom link to the page with the recipe ?
+    # 5 - count of outputs results
+    # 6 - background display and clean vis
 
     # Set title and user input elements
     st.title("Recipe Recommender Network")
