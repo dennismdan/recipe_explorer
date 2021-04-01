@@ -26,6 +26,45 @@ def test_predictCluster():
     assert isinstance(clusterNr,int)
 
 def test_getClusterData():
+    #TODO: assert that the class attribute was create self.clusterDf
     clusterDf = cluster_api.getClusterData()
     assert isinstance(clusterDf,pd.DataFrame)
-    assert len(clusterDf)==topNrRecipes
+
+
+def test_getgetEdgesDf():
+    try:
+        df = cluster_api.getClusterData()
+        edgesDf = cluster_api.getEdgesDf()
+        assert False
+    except:
+        assert True
+
+    assert isinstance(edgesDf,pd.DataFrame)
+
+
+    clusterDf = cluster_api.getClusterData()
+    nodeGraph = cluster_api.getEdgesDf()
+
+    assert isinstance(nodeGraph,pd.DataFrame)
+
+
+def test_getClusterTopData():
+
+    df = cluster_api.getClusterData()
+    print(type(cluster_api.clusterDf))
+    edgesDf = cluster_api.getEdgesDf()
+    topDf = cluster_api.getClusterTopData()
+
+    assert isinstance(topDf,pd.DataFrame)
+
+
+def test_topRecipeData():
+    dfTop,edges,clusterNr = cluster_api.topRecipeData()
+    print(clusterNr)
+    print(dfTop)
+    print(edges)
+    assert isinstance(dfTop,pd.DataFrame)
+    assert isinstance(edges,pd.DataFrame)
+    assert isinstance(clusterNr, int)
+    assert len(dfTop)==topNrRecipes
+
