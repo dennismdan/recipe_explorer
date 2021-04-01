@@ -1,10 +1,4 @@
 import streamlit as st
-import pandas as pd
-import sklearn
-import numpy as np
-import time
-import json
-import numpy as np
 
 #from SPARQLWrapper import SPARQLWrapper, JSON
 from streamlit_agraph import agraph, Node, Edge, TripleStore, Config
@@ -36,7 +30,6 @@ def app():
     # Dennis note: lets keep only one box for user input to simplify implementations, we can add the second one later
     userIngredientsInput = sidebar.text_input(label="Enter search terms")
     userTopNRecipes = sidebar.selectbox(label="Choose number of recipes to return", options=[10,20,30,40,50], index=1)
-    #TODO: make second box actionable: userInput = sidebar.text_input("Input recipe to use as cluster seed: ")
 
     doneButton = sidebar.button("Run")
 
@@ -51,61 +44,6 @@ def app():
             sidebar.success('Perfect, results are displayed in the graph')
 
             updateGraph(clusterApi,middle)
-
-    # # create empty lists for holding nodes and edges for network
-    # #net = Network() # place holder for transitioning to pyvis
-    # nodes = []
-    # edges = []
-    # nodeSize = 500
-    #
-    # # Bring in the initial data
-    # #tmp = pd.read_csv(testDataPath) # Here is where we would access the data from the backend
-    # #print('length before filter: ', len(tmp))
-    #
-    # # filter data for only recipes that contain the user inputs
-    # if userIngredientsInput != "":
-    #   ingredients = userIngredientsInput.split(',')
-    #   ingredients = [i.strip() for i in ingredients]
-    #   contains = [tmp["RecipeIngredientParts"].str.contains(i) for i in ingredients]
-    #   #print(ingredients)
-    #   tmp = tmp[np.all(contains, axis=0)]
-    #   print('length of filtered: ', len(tmp))
-    #
-    #
-    # if len(tmp) != 0:
-    #   edgeList = []
-    #
-    #   for i in range(0, len(tmp["nodes"])):
-    #       nodes.extend([Node(id=int(tmp.iloc[i]['RecipeId']), label=tmp.iloc[i]["Name"],
-    #                          size=nodeSize)])
-    #       #net.add_node(n_id=int(tmp.iloc[i]['RecipeId']), value=nodeSize, label=tmp.iloc[i]["Name"]) # place holder for transitioning to pyvis
-    #       for j in range(0, len(tmp["nodes"])):
-    #           if tmp.iloc[i]['RecipeId'] != tmp.iloc[j]['RecipeId'] and int(tmp.iloc[i]["Ingredient Difference"]) == int(tmp.iloc[j]["Ingredient Difference"]) \
-    #                   and [int(tmp.iloc[j]['RecipeId']),int(tmp.iloc[i]['RecipeId'])] not in edgeList:
-    #               edgeList.append([int(tmp.iloc[i]['RecipeId']),int(tmp.iloc[j]['RecipeId'])])
-    #               edges.extend([Edge(source=int(tmp.iloc[i]['RecipeId']), label=int(tmp.iloc[j]["Ingredient Difference"]),
-    #                                  target=int(tmp.iloc[j]["RecipeId"]), type="CURVE_SMOOTH")])
-    #               #net.add_edge(int(tmp.iloc[i]['RecipeId']),int(tmp.iloc[j]["RecipeId"]),title=int(tmp.iloc[j]["Ingredient Difference"])) # # place holder for transitioning to pyvis
-    #
-    #   viewEdges = edges
-    #
-    #   # set network configuration
-    #   config = Config(height=500,
-    #                   width=700,
-    #                   nodeHighlightBehavior=True,
-    #                   highlightColor="#F7A7A6",
-    #                   directed=False,
-    #                   collapsible=True,
-    #                   node={'labelProperty': 'label'},
-    #                   link={'labelProperty': 'label', 'renderLabel': False}
-    #                   )
-    #   # add network to middle column of streamlit canvas
-    #   with middle:
-    #       #st.text("Displaying {} cuisine types".format(display_category))
-    #       return_value = agraph(nodes=nodes,
-    #                              edges=viewEdges,
-    #                              config=config)
-    #         #net.show('testgraph.html') # place holder for transitioning to pyvis
 
     st.text("Showing recipes based on the following ingredients: {}".format(userIngredientsInput))
 
@@ -130,7 +68,7 @@ def generateGraph(nodes,edges,middle):
                     )
     # add network to middle column of streamlit canvas
     with middle:
-        # st.text("Displaying {} cuisine types".format(display_category))
+
         return_value = agraph(nodes=nodes,
                               edges=edges,
                               config=config)
