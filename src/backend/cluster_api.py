@@ -26,6 +26,9 @@ class ClusterAPI:
         4. filter top N
         5. return DF
 
+        recipeDf cols = "RecipeId","Name","RecipeIngredientParts",
+                        "RecipeIngredientQuantities","Description",
+                        "Images","RecipeCategory","Keywords"
         ...
 
         TODO: add additional api inputs (work with Jonathan)

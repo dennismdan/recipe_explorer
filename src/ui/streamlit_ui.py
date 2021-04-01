@@ -13,6 +13,8 @@ from streamlit_agraph import agraph, Node, Edge, TripleStore, Config
 from run_time_constants import testDataPath
 from ..backend.cluster_api import ClusterAPI
 
+topNrRecipes = 10
+
 def app():
     #TODO: box to enter user input
     #TODO: submit text button
@@ -32,16 +34,19 @@ def app():
 
     # Dennis note: lets keep only one box for user input to simplify implementations, we can add the second one later
     userIngredientsInput = sidebar.text_input()
+
     #TODO: make second box actionable: userInput = sidebar.text_input("Input recipe to use as cluster seed: ")
-    doneButton = sidebar.button("Done")
+
+    doneButton = sidebar.button("Run")
 
     if doneButton:
+
         result = composeClusterApi(userIngredientsInput)
 
         if not result:
             sidebar.write("Did not find a user input, please add ingredients")
         else:
-            clusterApi = result
+            clusterApi = result #contains RecipeDf, and edgesDf
             sidebar.success('Perfect, results are displayed in the graph')
 
             updateGraph(clusterApi,middle)
@@ -122,8 +127,6 @@ def app():
 
     st.text("Showing recipes based on the following ingredients: {}".format(userIngredientsInput))
 
-
-
 def updateGraph(clusterApi,middle):
     recipeDf = clusterApi.clusterTopDf
     edgesDf = clusterApi.edgesTopDf
@@ -156,7 +159,7 @@ def composeClusterApi(userIngredientsInput):
 
     try:
         clusterApi = ClusterAPI(stringInput=userIngredientsInput,
-                                topNrRecipes=10)
+                                topNrRecipes=topNrRecipes)
         clusterApi.topRecipeData()
     except:
         return False
@@ -170,11 +173,13 @@ def getNodesEdges(recipeDf,edgesDf,nodeList):
     for index,row in nodeList.iterrows():
         #TODO: normalize nodeSize
         id = row["RecipeId"]
+        nodeSize = row["nodeSize"]
         label = recipeDf[recipeDf.RecipeId == id].Name.tolist()[0]
-        nodes.append(Node(id = id, label = label, size = row["nodeSize"]))
+
+        nodes.append(Node(id = id, label = label, size = nodeSize))
 
     for index, row in edgesDf.iterrows():
-        edges.append(Edge(source=row["recipeIdA"], target=row["recipeIdB"],linkValue=row["edge_weight"], type="CURVE_SMOOTH"))
+        edges.append(Edge(source=row["recipeIdA"], target=row["recipeIdB"],strokeWidth = row["edge_weight"], type="CURVE_SMOOTH"))
 
     return nodes,edges
 
