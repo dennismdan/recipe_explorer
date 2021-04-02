@@ -46,7 +46,7 @@ class ClusterAPI:
         self.rawUserInput:str = stringInput
         self.userIngredientInput:List[str] = self.cleanUserInput(self.rawUserInput)
         self.pathToModel = pipelineFilePath
-        self.fullDf: pd.DataFrame = pd.read_csv(fullDataFilePath, header=0, sep=',')
+        self.fullDf: pd.DataFrame = pd.read_csv(fullDataFilePath, header=0, sep=',',skipfooter = 1)
         self.pipelineMode:Pipeline = self.getModel(self.pathToModel)
         self.returnRecipeCount: int = topNrRecipes
 
@@ -108,7 +108,8 @@ class ClusterAPI:
         :param stringInput: one recipe input in format ["ingridient1, ingridient2...."] all in one string in a list
         :return: return class that the "recipe" belongs to according to model
         """
-
+        assert isinstance(newRecipe, list)
+        assert isinstance(newRecipe[0],str)
         if model is None:
             model = self.pipelineMode
         if newRecipe is None:
@@ -197,7 +198,7 @@ class ClusterAPI:
 
         return self.clusterTopDf, self.nodeList, self.nodesAndWeights
 
-    def getEdgesTop(self):
+    def getEdgesTop(self)->pd.DataFrame:
         if self.clusterTopDf is None:
             raise NoClusterDfError("self.clusterTopDf is not defined, getClusterTopData method must run first")
 
@@ -228,6 +229,12 @@ class ClusterAPI:
         edgesTop = self.getEdgesTop()
 
         return dfTop,edgesTop,clusterNr
+
+    def updateRecipeData(self,returnRecipeCount:int)->Tuple[pd.DataFrame,pd.DataFrame]:
+        dfTop = self.getClusterTopData(returnRecipeCount)
+        edgesTop = self.getEdgesTop()
+
+        return dfTop,edgesTop
 
 class NoClusterDfError(Exception):
     """
