@@ -23,14 +23,14 @@ def app():
     # Set title and user input elements
     st.title("Recipe Recommender Network")
     sidebar = st.sidebar
-    middle, rsidebar = st.beta_columns([3, 1])
+    middle, rsidebar = st.beta_columns([4, 1])
     sidebar.title("Enter ingredients or any food related words")
     sidebar.text("The more detail you add to the\ningredients the better your\nresuls will be")
 
     # Dennis note: lets keep only one box for user input to simplify implementations, we can add the second one later
     userIngredientsInput = sidebar.text_input(label="Enter search terms")
     userTopNRecipes = sidebar.selectbox(label="Choose number of recipes to return", options=[10,20,30,40,50], index=1)
-
+    middle.text("After you enter ingredients or key words related to recipes you are\ninterested in, select the number of recipes you would like returned\nand press 'Run'.\n\nA network of related recipes will appear below, enjoy!")
     doneButton = sidebar.button("Run")
 
     if doneButton:
@@ -45,7 +45,8 @@ def app():
 
             updateGraph(clusterApi,middle)
 
-    st.text("Showing recipes based on the following ingredients: {}".format(userIngredientsInput))
+        middle.text("Showing recipes based on the following ingredients:\n{}".format(userIngredientsInput))
+        middle.text("The largest nodes represent recipes that best match your search\nterms. The thicker the line between nodes the more similar\nthe recipes.")
 
 def updateGraph(clusterApi,middle):
     recipeDf = clusterApi.clusterTopDf
@@ -57,8 +58,8 @@ def updateGraph(clusterApi,middle):
 
 def generateGraph(nodes,edges,middle):
     # set network configuration
-    config = Config(height=500,
-                    width=700,
+    config = Config(height=400,
+                    width=1000,
                     nodeHighlightBehavior=True,
                     highlightColor="#F7A7A6",
                     directed=False,
