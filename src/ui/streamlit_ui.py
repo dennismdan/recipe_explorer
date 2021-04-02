@@ -9,9 +9,6 @@ from ..backend.cluster_api import ClusterAPI
 topNrRecipes = 10
 
 def app():
-    userIngredientsInput = None
-    userTopNRecipes = None
-
     #TODO: Node interaction (click node -> link with some recipe details populates the bottom of the page ?)
     #TODO: Arrange windows:
     #TODO: initial nodegraph... none - just text instructing user to enter recipes
@@ -30,8 +27,8 @@ def app():
     sidebar.text("The more detail you add to the\ningredients the better your\nresuls will be")
 
     # Dennis note: lets keep only one box for user input to simplify implementations, we can add the second one later
-    initialIngridientsInput = sidebar.text_input(label="Enter search terms")
-    initialRecipeCountInput = sidebar.selectbox(label="Choose number of recipes to return", options=[10,20,30,40,50], index=1)
+    userIngredientsInput = sidebar.text_input(label="Enter search terms")
+    userTopNRecipes = sidebar.selectbox(label="Choose number of recipes to return", options=[10,20,30,40,50], index=1)
 
     runButton = sidebar.button("Run")
 
@@ -39,45 +36,16 @@ def app():
 
     if runButton:
         print(userIngredientsInput)
-        recipeUpdate:bool = None
-        recipeCountUpdate:bool = None
 
-        #check if only the nr of clusters was updated
-        if userIngredientsInput != initialIngridientsInput:
-            userIngredientsInput = initialIngridientsInput
-            recipeUpdate = True
+        result = composeClusterApi(userIngredientsInput, userTopNRecipes)
+        st.write(result)
+
+        if result is None:
+            status_text.text("Did not find a user input, please add ingredients")
         else:
-            recipeUpdate = False
-
-        if userTopNRecipes != initialRecipeCountInput:
-            userTopNRecipes = initialRecipeCountInput
-            recipeCountUpdate = True
-        else:
-            recipeCountUpdate = False
-
-        # run scenarios
-        if recipeUpdate:
-            result = composeClusterApi(userIngredientsInput, userTopNRecipes)
-            st.write(result)
-
-            if result is None:
-                status_text.text("Did not find a user input, please add ingredients")
-            else:
-                clusterApi = result #contains RecipeDf, and edgesDf
-                status_text.text("Perfect, results are displayed in the graph")
-                #sidebar.success('Perfect, results are displayed in the graph')
-
-                updateGraph(clusterApi,middle)
-
-        if not recipeUpdate and recipeCountUpdate:
-            clusterApi = clusterApi.updateRecipeData(userTopNRecipes)
-            updateGraph(clusterApi, middle)
-            status_text.text("Updated to only show top ",str(userTopNRecipes)," recipes")
-            print("unly updating top N")
-
-        if not recipeCountUpdate and not recipeCountUpdate:
-            status_text.text("No changes to the input found")
-
+            clusterApi = result #contains RecipeDf, and edgesDf
+            status_text.text("Perfect, results are displayed in the graph")
+            updateGraph(clusterApi,middle)
 
     st.text("Showing recipes based on the following ingredients: {}".format(userIngredientsInput))
 
