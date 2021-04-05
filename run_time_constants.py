@@ -21,6 +21,7 @@ pipelineFilePath = os.path.join(models,"pipeline_k150.sav")
 #      |______all project files (src...)
 #  |___data
 #      |______ recipe_clusters.csv
+
 fullDataFilePath = os.path.join(data,"recipe_clusters.csv")
 
 #fullDataFilePath = os.path.join(data,"recipe_clusters.csv")
