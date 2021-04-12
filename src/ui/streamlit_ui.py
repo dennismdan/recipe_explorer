@@ -55,7 +55,7 @@ def app():
 def updateGraph(clusterApi,middle):
     recipeDf = clusterApi.clusterTopDf
     st.write(recipeDf)
-    edgesDf = clusterApi.edgesTopDf
+    edgesDf = clusterApi.edgesDf
     st.write(edgesDf)
     nodesAndWeights = clusterApi.nodesAndWeights
     st.write(nodesAndWeights)
@@ -102,15 +102,16 @@ def getNodesEdges(recipeDf,edgesDf,nodeList):
     nodes = []
     edges = []
     existingEdges =[]
-    nodeList["nodeSize"] = ((nodeList["nodeSize"] - nodeList["nodeSize"].min()) / (nodeList["nodeSize"].max() - nodeList["nodeSize"].min())) * 2000
-    for index,row in nodeList.iterrows():
 
+    nodeList["nodeSize"] = nodeList["nodeSize"]* 2000
+
+    for index,row in nodeList.iterrows():
         id = row["RecipeId"]
         nodeSize = row["nodeSize"]
         label = recipeDf[recipeDf.RecipeId == id].Name.tolist()[0]
 
         nodes.append(Node(id = int(id), label = label, size = int(nodeSize)))
-    edgesDf["edge_weight"] = ((edgesDf["edge_weight"] - edgesDf["edge_weight"].min()) / (edgesDf["edge_weight"].max() - edgesDf["edge_weight"].min())) * 5
+    edgesDf["edge_weight"] = edgesDf["edge_weight"] * 5
     for index, row in edgesDf.iterrows():
         if [int(row["recipeIdB"]), int(row["recipeIdA"])] not in existingEdges:
             existingEdges.append([int(row["recipeIdA"]),int(row["recipeIdB"])])

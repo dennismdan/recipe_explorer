@@ -2,6 +2,7 @@ import pytest
 from ..cluster_api import ClusterAPI
 from sklearn.pipeline import Pipeline
 import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 userInputString = "pasta, pizza, tomatoes, basil"
 topNrRecipes = 10
@@ -31,21 +32,16 @@ def test_getClusterData():
     assert isinstance(clusterDf,pd.DataFrame)
 
 
-def test_getgetEdgesDf():
-    try:
-        df = cluster_api.getClusterData()
-        edgesDf = cluster_api.getEdgesDf()
-        assert False
-    except:
-        assert True
+def test_getEdgesDf():
+    corpus = ["one two three four five", "one two nine four seven", "ten two eleven four five"]
+    ids = [11,15,21]
+    df = pd.DataFrame({"RecipeIngredientParts":corpus,"RecipeId":ids})
 
-    assert isinstance(edgesDf,pd.DataFrame)
-
-
-    clusterDf = cluster_api.getClusterData()
-    nodeGraph = cluster_api.getEdgesDf()
+    nodeGraph = cluster_api.getEdgesDf(df)
 
     assert isinstance(nodeGraph,pd.DataFrame)
+    assert len(nodeGraph) ==3
+    assert nodeGraph.loc[0,"edge_weight"]==1
 
 
 def test_getClusterTopData():
@@ -67,4 +63,3 @@ def test_topRecipeData():
     assert isinstance(edges,pd.DataFrame)
     assert isinstance(clusterNr, int)
     assert len(dfTop)==topNrRecipes
-
