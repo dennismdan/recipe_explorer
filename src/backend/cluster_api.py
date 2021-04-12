@@ -249,7 +249,7 @@ class ClusterAPI:
         logName = "time_report_"+tag+".json"
         logpath = os.path.join("time_test",logName)
         with open(logpath,"w") as f:
-            json.dump(logName,f)
+            json.dump(log,f)
 
         return dfTop,edgesDf,clusterNr
 
