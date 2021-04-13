@@ -1,9 +1,14 @@
+import datetime
+import json
+import time
+
 import pandas as pd
 import numpy as np
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.pipeline import Pipeline
 from typing import List,Tuple
 
@@ -55,13 +60,8 @@ class ClusterAPI:
         self.clusterDf:pd.DataFrame = None
         self.clusterTopDf: pd.DataFrame = None
         self.edgesDf:pd.DataFrame = None
-        self.edgesTopDf:pd.DataFrame = None
         self.nodesAndWeights = None
         self.nodeList = None
-
-    def cleanData(self, fileName:str)->pd.DataFrame:
-        #TODO: possibly for beggining only, low priority
-        pass
 
     def cleanUserInput(self, userInputString:str)->List[str]:
         """
@@ -74,12 +74,6 @@ class ClusterAPI:
         userInputString = [userInputString]
 
         return userInputString
-
-    def fitModel(self):
-        # Building a new cluster model
-        # time intensive but possible on smaller subsets of data
-        # ideally do this beforehand and have a pipeline model
-        pass
 
     def saveModel(self, model):
         # save the model to disk
@@ -133,18 +127,35 @@ class ClusterAPI:
         
         return self.clusterDf
 
+    def getClusterTopData(self,returnRecipeCount:int = None):
+        # TODO: this method will need to run getNodalGraph
+
+        if returnRecipeCount is None and self.returnRecipeCount is not None:
+            returnRecipeCount = self.returnRecipeCount
+        elif returnRecipeCount is None and self.returnRecipeCount is None:
+            raise NoClusterDfError("A number for recipe count wasn't defined")
+
+        if self.clusterDf is None:
+            raise NoClusterDfError("clusterDf is not defined, getClusterData method must run first")
+
+        clusterDf = self.clusterDf.copy()
+
+        self.clusterTopDf = clusterDf.sample(n = returnRecipeCount)
+
+        return self.clusterTopDf
+
     def getEdgesDf(self, df:pd.DataFrame = None)->pd.DataFrame:
         """
         :param df:subset of data belonging to a cluster
         :return: df as a nodal graph with nodeIdA and nodeIdB with edge_weights
         """
 
-        if df is None and self.clusterDf is not None:
-            df = self.clusterDf
+        if df is None and self.clusterTopDf is not None:
+            df = self.clusterTopDf
         elif df is None:
             print("")
             NoClusterDfError("No dataframe for cluster defined. "
-                             "Call methods getClusterData() to create the dataframe first")
+                             "Call methods getClusterTopData() to create the dataframe first")
         else:
             print("dataframe passed to function")
 
@@ -152,89 +163,84 @@ class ClusterAPI:
         corpus = df["RecipeIngredientParts"].tolist()
         ids = df["RecipeId"].tolist()
         ids = [int(id_) for id_ in ids]
-        assert isinstance(ids,list)
 
         #create the sparse matrix
-        countVectorizer = CountVectorizer(stop_words={'english'})
-        vectorizorModel = countVectorizer.fit(corpus)
+        vectorizer = TfidfVectorizer(stop_words={'english'},use_idf=True)
+        vectorizorModel = vectorizer.fit(corpus)
         X = vectorizorModel.transform(corpus)
 
         #multiply to get the correlations
         nodalSparseGraph = X @ X.T
-        c = nodalSparseGraph.tocoo()
+        nodalSparseGraph = np.array(nodalSparseGraph.todense())
 
+        #extract only lower triangle to reduce repeating endges
+        nodalGraph = np.tril(nodalSparseGraph,k=-1) #sets diag =0 also
+        shape = nodalGraph.shape
+
+        coordinates = {"recipeIdA": [], "recipeIdB": [], "edge_weight": []}
+        for row in range(shape[0]):
+            for col in range(shape[1]):
+                weight = nodalGraph[row][col]
+                if weight > 0:
+                    coordinates["recipeIdA"].append(row)
+                    coordinates["recipeIdB"].append(col)
+                    coordinates["edge_weight"].append(weight)
+
+
+
+        #place values into pandas
+        edgesDf = pd.DataFrame(coordinates)
+
+        #normalize weights from 0 to 1
+        scaler = MinMaxScaler()
+        edgesDf["edge_weight"] = scaler.fit_transform(edgesDf[["edge_weight"]])
+        edgesDf["edge_weight"] = edgesDf["edge_weight"].round(2)
         #reformat to pandas and assign back the recipe ids
-        nodesWeights = pd.DataFrame({"recipeIdA": c.row, "recipeIdB": c.col, "edge_weight": c.data})
-        nodesWeights["recipeIdA"] = nodesWeights.recipeIdA.apply(lambda x: ids[x])
-        nodesWeights["recipeIdB"] = nodesWeights.recipeIdB.apply(lambda x: ids[x])
-        self.edgesDf = nodesWeights[nodesWeights["recipeIdA"] != nodesWeights["recipeIdB"]]
+        edgesDf["recipeIdA"] = edgesDf.recipeIdA.apply(lambda x: ids[x])
+        edgesDf["recipeIdB"] = edgesDf.recipeIdB.apply(lambda x: ids[x])
+
+        self.edgesDf = edgesDf.copy() # save results to the class attribute
+
+
+        df1 = edgesDf[["recipeIdA", "edge_weight"]].rename(columns={"recipeIdA": "RecipeId","edge_weight":"nodeSize"})
+        df2 = edgesDf[["recipeIdB", "edge_weight"]].rename(columns={"recipeIdB": "RecipeId","edge_weight":"nodeSize"})
+
+        nodeSizes = pd.concat([df1, df2])
+        nodeSizes = nodeSizes.groupby("RecipeId", as_index=False).sum()
+        nodeSizes["nodeSize"] = scaler.fit_transform(nodeSizes[["nodeSize"]]).round(2)
+
+        self.nodesAndWeights = nodeSizes
+
         return self.edgesDf
-
-    def getClusterTopData(self,returnRecipeCount:int = None):
-        # TODO: this method will need to run getNodalGraph
-
-        if returnRecipeCount is None:
-            returnRecipeCount = self.returnRecipeCount
-
-        if self.clusterDf is None:
-            raise NoClusterDfError("clusterDf is not defined, getClusterData method must run first")
-
-        if self.edgesDf is None:
-            raise NoClusterDfError("edgesDf is not defined, getNodeGraph method must run first")
-
-        clusterDf = self.clusterDf.copy()
-
-        subsetNodesDF = self.edgesDf.copy()
-
-        subsetNodesDF = subsetNodesDF[["recipeIdA", "edge_weight"]].groupby("recipeIdA").sum()
-        self.nodesAndWeights = subsetNodesDF.sort_values(by="edge_weight", ascending=False).head(returnRecipeCount).copy()
-        #self.nodeList = subsetNodesDF.sort_values(by="edge_weight", ascending=False).head(returnRecipeCount).index.tolist()
-        self.nodeList = self.nodesAndWeights.index.tolist()
-
-        self.nodesAndWeights.reset_index(inplace=True)
-        self.nodesAndWeights.rename(columns = {'recipeIdA':'RecipeId','edge_weight': 'nodeSize'}, inplace=True)
-
-        self.clusterTopDf = clusterDf[clusterDf.RecipeId.isin(self.nodeList)]
-
-        return self.clusterTopDf, self.nodeList, self.nodesAndWeights
-
-    def getEdgesTop(self)->pd.DataFrame:
-        if self.clusterTopDf is None:
-            raise NoClusterDfError("self.clusterTopDf is not defined, getClusterTopData method must run first")
-
-        if self.edgesDf is None:
-            raise NoClusterDfError("edgesDf is not defined, getNodeGraph method must run first")
-
-        nodeList = self.clusterTopDf.RecipeId.unique().tolist()
-        edgesTopDf = self.edgesDf.copy()
-        edgesTopDf = edgesTopDf[self.edgesDf.recipeIdA.isin(nodeList)]
-        edgesTopDf = edgesTopDf[self.edgesDf.recipeIdB.isin(nodeList)]
-
-        self.edgesTopDf = edgesTopDf
-
-        return self.edgesTopDf
 
     def topRecipeData(self)->Tuple[pd.DataFrame,pd.DataFrame,int]:
 
         model = self.pipelineMode
+
         newRecipe = self.userIngredientInput
         returnRecipeCount = self.returnRecipeCount
 
         clusterNr = self.predictCluster(model, newRecipe)
 
-        dfFull = self.getClusterData(clusterNr)
-        edgesDf = self.getEdgesDf(dfFull)
+        self.getClusterData(clusterNr)
 
         dfTop = self.getClusterTopData(returnRecipeCount)
-        edgesTop = self.getEdgesTop()
 
-        return dfTop,edgesTop,clusterNr
+        edgesDf = self.getEdgesDf(dfTop)
 
-    def updateRecipeData(self,returnRecipeCount:int)->Tuple[pd.DataFrame,pd.DataFrame]:
+        return dfTop,edgesDf,clusterNr
+
+    def updateRecipeData(self,returnRecipeCount:int = None)->Tuple[pd.DataFrame,pd.DataFrame]:
+        if returnRecipeCount is None and self.returnRecipeCount is not None:
+            returnRecipeCount = self.returnRecipeCount
+        elif returnRecipeCount is None and self.returnRecipeCount is None:
+            raise NoClusterDfError("A number for recipe count wasn't defined")
+
+
         dfTop = self.getClusterTopData(returnRecipeCount)
-        edgesTop = self.getEdgesTop()
+        edgesDf = self.getEdgesDf(dfTop)
 
-        return dfTop,edgesTop
+        return dfTop,edgesDf
 
 class NoClusterDfError(Exception):
     """
