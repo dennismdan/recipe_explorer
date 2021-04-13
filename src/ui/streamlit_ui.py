@@ -5,8 +5,14 @@ from streamlit_agraph import agraph, Node, Edge, TripleStore, Config
 #from pyvis.network import Network
 
 from ..backend.cluster_api import ClusterAPI
+from selenium import webdriver
+
 
 topNrRecipes = 10
+
+
+
+
 
 def app():
     #TODO: Node interaction (click node -> link with some recipe details populates the bottom of the page ?)

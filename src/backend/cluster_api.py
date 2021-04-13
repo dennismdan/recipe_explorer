@@ -214,42 +214,19 @@ class ClusterAPI:
         return self.edgesDf
 
     def topRecipeData(self)->Tuple[pd.DataFrame,pd.DataFrame,int]:
-        log = {}
-        tag = datetime.datetime.now()
-        tag = tag.strftime("%d_%m_%Y_%H_%M_%S")
 
-        start = time.time()
         model = self.pipelineMode
-        end = time.time()
-        log["getModel"] = end-start
 
         newRecipe = self.userIngredientInput
         returnRecipeCount = self.returnRecipeCount
 
-        start = time.time()
         clusterNr = self.predictCluster(model, newRecipe)
-        end = time.time()
-        log["getClusterNr"] = end-start
 
-        start = time.time()
         self.getClusterData(clusterNr)
-        end = time.time()
-        log["getFullData"] = end-start
 
-        start = time.time()
         dfTop = self.getClusterTopData(returnRecipeCount)
-        end = time.time()
-        log["getRandomSubsetData"] = end-start
 
-        start = time.time()
         edgesDf = self.getEdgesDf(dfTop)
-        end = time.time()
-        log["generateEdges"] = end-start
-
-        logName = "time_report_"+tag+".json"
-        logpath = os.path.join("time_test",logName)
-        with open(logpath,"w") as f:
-            json.dump(log,f)
 
         return dfTop,edgesDf,clusterNr
 
