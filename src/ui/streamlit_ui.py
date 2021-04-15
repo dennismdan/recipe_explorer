@@ -23,7 +23,10 @@ def app():
     # Set title and user input elements
     st.title("Recipe Explorer Network")
     st.text("In the left sidebar enter keywords to search for similar recipes.\nNext select the number of recipes you would like returned, and click Run.\n"
-            "A network of recipes to explore will appear below based on your search criteria, bon appetite!")
+            "A network of recipes to explore will appear below. The returned recipes are\nselected from a dataset of over 500,000 recipes. "
+            "The recipes have been\nseparated into clusters based on common ingredients. Recipes are selected\nfrom the cluster most "
+            "representative of your search terms, bon appetite!")
+
     sidebar = st.sidebar
     middle, rsidebar = st.beta_columns([3,1])
     sidebar.title("Enter ingredients or any food related words")
@@ -74,8 +77,8 @@ def updateGraph(clusterApi,middle):
 
     for item in urlList:
         middle.markdown(item)
-    middle.text("Larger nodes represent recipes that best match your search.\n"
-                "The edge thickness represents similarity between recipes.")
+    middle.text("Larger circles show recipes most similar to your search terms.\n"
+                "The thickness of the lines represents similarity between recipes.")
 
 
 def generateGraph(nodes, edges, middle):
