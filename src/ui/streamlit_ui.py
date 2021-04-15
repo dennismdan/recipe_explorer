@@ -21,9 +21,9 @@ def app():
     # 6 - background display and clean vis
 
     # Set title and user input elements
-    st.title("Recipe Recommender Network")
+    st.title("Recipe Explorer Network")
     st.text("In the left sidebar enter keywords to search for similar recipes.\nNext select the number of recipes you would like returned, and click Run.\n"
-            "A network of recipes will appear below based on your search criteria, bon appetite!")
+            "A network of recipes to explore will appear below based on your search criteria, bon appetite!")
     sidebar = st.sidebar
     middle, rsidebar = st.beta_columns([3,1])
     sidebar.title("Enter ingredients or any food related words")
@@ -31,7 +31,7 @@ def app():
 
     userIngredientsInput = sidebar.text_input(label="Enter search terms")
 
-    userTopNRecipes = sidebar.selectbox(label="Choose number of recipes to return", options=[10,20,30,40,50], index=1)
+    userTopNRecipes = sidebar.selectbox(label="Choose number of recipes to return", options=[5,10,15,20], index=1)
 
     runButton = sidebar.button("Run")
 
@@ -57,7 +57,7 @@ def updateGraph(clusterApi,middle):
 
     recipeDf = clusterApi.clusterTopDf
 
-    edgesDf = clusterApi.edgesTopDf
+    edgesDf = clusterApi.edgesDf
 
     nodesAndWeights = clusterApi.nodesAndWeights
 
