@@ -1,7 +1,15 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import SessionState
-import tkinter
+
+try:
+    import streamlit.ReportThread as ReportThread
+    from streamlit.server.Server import Server
+except Exception:
+    # Streamlit >= 0.65.0
+    import streamlit.report_thread as ReportThread
+    from streamlit.server.server import Server
+
 #from SPARQLWrapper import SPARQLWrapper, JSON
 from streamlit_agraph import agraph, Node, Edge, TripleStore, Config
 from pyvis.network import Network
@@ -29,90 +37,92 @@ def app():
     sidebar = st.sidebar
     sidebar.title("Enter ingredients or any food related words")
     sidebar.text("The more detail you add to the\ningredients the better your\nresuls will be")
-    #button = st.empty()
+
     #Set state
-    #session_state = SessionState()
     ss = SessionState
-    session_state = ss.get(name='', Buttonclicked=False, button='')
+    session_state = ss.get(name='', Buttonclicked=False, button='', recipe_name = '')
    
-    # Dennis note: lets keep only one box for user input to simplify implementations, we can add the second one later
     userIngredientsInput = sidebar.text_input(label="Enter search terms", key="init")
-    print('seesion state:' + session_state.name)
-    print('session run button:' + str(session_state.Buttonclicked))
+
     userTopNRecipes = sidebar.selectbox(label="Choose number of recipes to return", options=[3,5,10,15], index=1)
     runButton = sidebar.button("Run")
     status_text = sidebar.text("enter inputs and run")
+    graph = st.beta_columns((5))
+    buttons = []
+    button = st.empty()
+    session_state.button = button
     
-    if session_state.Buttonclicked == False:
-        if runButton:
-            result = composeClusterApi(userIngredientsInput, userTopNRecipes)
-            session_state.Buttonclicked = True
-            if result is None:
-                status_text.text("Did not find a user input, please add ingredients")
-            else:
-                clusterApi = result
-                session_state.name = 'onion'    
-                status_text.text("Perfect, results are displayed in the graph")
-                updateGraph(clusterApi,session_state, sidebar)
-    else:
-        print('start')
-        print(session_state.name)
-        print(session_state.button)
-        #print('cache test:' + str(returnbutton))            
-
+    st.markdown("In the left sidebar enter keywords to search for similar recipes.\nNext select the number of recipes you would like returned, and click Run.\n"
+            "A network of recipes to explore will appear below. The returned recipes are\nselected from a dataset of over 500,000 recipes. "
+            "The recipes have been\nseparated into clusters based on common ingredients. Recipes are selected\nfrom the cluster most "
+            "representative of your search terms, bon appetite!")
+    
+    if (session_state.Buttonclicked == True and runButton == False):
         if session_state.button:
-            result = composeClusterApi('onion', userTopNRecipes)
-            print('seesion state:' + session_state.name)
-            print('run button:' + str(session_state.Buttonclicked))
-            print('herein the loop')
-                #session_state.Buttonclicked = True
-                #ss.name = 'onions'
+            print('start re-run')
+           
+            print(session_state.recipe_name)
+            print('re-run:' + session_state.recipe_name)
+            st.text(session_state.recipe_name)
+            st.text("Showing recipes based on the following ingredients: {}".format(session_state.name))
+            try:
+                result = composeClusterApi(session_state.name, userTopNRecipes)
+            except Exception:
+                st.write('No results Found.')
             if result is None:
                 status_text.text("Did not find a user input, please add ingredients")
             else:
                 clusterApi = result 
                 status_text.text("Perfect, results are displayed in the graph")
-                updateGraph(clusterApi,session_state, sidebar)
-         
+                updateGraph(clusterApi,session_state, sidebar, buttons)
+                    
+    #if session_state.Buttonclicked == False:
+    if runButton:
+        st.text("Showing recipes based on the following ingredients: {}".format(userIngredientsInput))
+        result = composeClusterApi(userIngredientsInput, userTopNRecipes)
+        session_state.Buttonclicked = True
+        if result is None:
+            status_text.text("Did not find a user input, please add ingredients")
+        else:
+            clusterApi = result
+                    #session_state.name = 'onion'    
+            status_text.text("Perfect, results are displayed in the graph")
+            updateGraph(clusterApi,session_state, sidebar, buttons)
+                
 
-               
-    st.markdown("In the left sidebar enter keywords to search for similar recipes.\nNext select the number of recipes you would like returned, and click Run.\n"
-            "A network of recipes to explore will appear below. The returned recipes are\nselected from a dataset of over 500,000 recipes. "
-            "The recipes have been\nseparated into clusters based on common ingredients. Recipes are selected\nfrom the cluster most "
-            "representative of your search terms, bon appetite!")
-    st.text("Showing recipes based on the following ingredients: {}".format(session_state.name))
-    
 
-def updateGraph(clusterApi, session_state, sidebar):
+def updateGraph(clusterApi, session_state, sidebar, button):
     recipeDf = clusterApi.clusterTopDf
     edgesDf = clusterApi.edgesDf
-    buttons = []
-
+    #st.write(recipeDf['RecipeIngredientParts'].tolist()[0])
     nodesAndWeights = clusterApi.nodesAndWeights
-   
-    nodes, edges, urlList  = getNodesEdges(recipeDf, edgesDf, nodesAndWeights)
+    test = []
+    int = []
+    nodes, edges, urlList, orderedNode  = getNodesEdges(recipeDf, edgesDf, nodesAndWeights)
  
     generateGraph(nodes,edges)
     
-    #session_state.name = 'onions' #recipeDf[recipeDf.RecipeId == nodes.id].Name.tolist()[0]
+    #session_state.name = recipeDf[recipeDf.RecipeId == orderedNode.id].Name.tolist()[0]
     #session_state.button = st.radio(label = "Test", options = ('Chicken', 'Beef'))
-    col1, col2 = st.beta_columns((3, 2)) #columns for results list
+    col1, col2 = st.beta_columns((3, 3)) #columns for results list
     with col1:    
         for i in range(len(urlList)):
             col1.write(urlList[i])
     with col2: 
-            for i in range(len(nodes)):
-                button = buttons.append(st.button(label = 'Explore Similar Options', key=str(i)))
-            #session_state.button = st.radio(label = "Explore Similar Recipes", options = buttons)
+        session_state.recipe_name = recipeDf[recipeDf.RecipeId == orderedNode[0][0]].Name.tolist()[0]
+        session_state.name = recipeDf[recipeDf.RecipeId == orderedNode[0][0]].RecipeIngredientParts.tolist()[0]
+        session_state.button = col2.button("Explore Similar Options to Top Result")
+        #for i in range(len(orderedNode)):
+            #session_state.name = recipeDf['RecipeIngredientParts'].tolist()[i]
+        #    session_state.name = recipeDf['RecipeIngredientParts'].tolist()
+            #session_state.recipe_name = recipeDf['Name'].tolist()[i]
+        #    session_state.recipe_name = recipeDf['Name'].tolist()
+            #print(recipeDf['Name'].tolist()[i])
+            #test.append(col2.button("Explore Similar Options", key=str(i)))
             #session_state.button = test
-            #st.write('You clicked: ' + str(test))
-                for i, button in enumerate(buttons):
-                    if button:
-                        session_state.name = str(i)
-                        #sidebar.text_input(label="Enter search terms", value=str(i))
-                        #userIngredientsInput = st.empty()
-                    #st.empty()                
 
+    print(session_state.button)
+            
 def generateGraph(nodes,edges): #,middle):
     # set network configuration
     config = Config(height=500,
@@ -148,12 +158,14 @@ def composeClusterApi(userIngredientsInput, topNrRecipes):
         return None
 
     return clusterApi
+    
 
 def getNodesEdges(recipeDf,edgesDf,nodeList):
     nodes = []
     edges = []
     existingEdges =[]
     urlList = []
+    orderedNode = []
     nodeList["nodeSize"] = ((nodeList["nodeSize"] - nodeList["nodeSize"].min()) / (nodeList["nodeSize"].max() - nodeList["nodeSize"].min())) * 1500
     nodeList.sort_values(by="nodeSize", ascending=False, inplace=True)
     nodeList.reset_index(drop=True, inplace=True)
@@ -167,6 +179,7 @@ def getNodesEdges(recipeDf,edgesDf,nodeList):
   
         label = label.replace('&quot;', '"')
         urlList.append(link)
+        orderedNode.append((id, nodeSize))
         try:
             nodes.append(Node(id = int(id), label = label.replace('&amp;', '&'), size = int(nodeSize)))
         except:
@@ -179,8 +192,8 @@ def getNodesEdges(recipeDf,edgesDf,nodeList):
         if [int(row["recipeIdB"]), int(row["recipeIdA"])] not in existingEdges:
             existingEdges.append([int(row["recipeIdA"]),int(row["recipeIdB"])])
             edges.append(Edge(source=int(row["recipeIdA"]), target=int(row["recipeIdB"]),strokeWidth = int(row["edge_weight"]), type="STRAIGHT"))
-
-    return nodes,edges, urlList
+        
+    return nodes,edges, urlList, orderedNode
 
 
 
