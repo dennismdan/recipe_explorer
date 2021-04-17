@@ -146,21 +146,21 @@ def updateGraph(clusterApi, session_state, session_state2, session_state3, sideb
     generateGraph(nodes,edges)
 
     col1, col2 = st.beta_columns((3, 3)) #columns for results list
-    col1.write('Click link below to go to recipe')
+    col1.write('Click a link below to go to recipe')
     with col1:
         for i in range(len(urlList)):
             col1.write(urlList[i])
     with col2:
-        col2.write('Click a button below to explote similar recipes')
+        col2.write('Click a button below to explore similar recipes')
         session_state.recipe_name = recipeDf[recipeDf.RecipeId == orderedNode[0][0]].Name.tolist()[0]
         session_state.name = recipeDf[recipeDf.RecipeId == orderedNode[0][0]].RecipeIngredientParts.tolist()[0]
-        session_state.button = col2.button("Explore Options Similar to the Top Result", key=1)
+        session_state.button = col2.button("Explore Options Similar to the Top Result", key=1)#the Top Result
         session_state2.recipe_name = recipeDf[recipeDf.RecipeId == orderedNode[1][0]].Name.tolist()[0]
         session_state2.name = recipeDf[recipeDf.RecipeId == orderedNode[1][0]].RecipeIngredientParts.tolist()[0]
-        session_state2.button = col2.button("Explore Options Similiar to 2nd Result", key=2)
+        session_state2.button = col2.button("Explore Options Similiar to the 2nd Result", key=2)
         session_state3.recipe_name = recipeDf[recipeDf.RecipeId == orderedNode[2][0]].Name.tolist()[0]
         session_state3.name = recipeDf[recipeDf.RecipeId == orderedNode[2][0]].RecipeIngredientParts.tolist()[0]
-        session_state3.button = col2.button("Explore Options Similar to 3rd Result", key=3)
+        session_state3.button = col2.button("Explore Options Similar to the 3rd Result", key=3)
 
             
 def generateGraph(nodes,edges): #,middle):
