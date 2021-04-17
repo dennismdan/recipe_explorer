@@ -66,8 +66,8 @@ def app():
         if session_state.button:
             print('start re-run')
            
-            print(session_state.recipe_name)
-            print('re-run:' + session_state.recipe_name)
+            # print(session_state.recipe_name)
+            # print('re-run:' + session_state.recipe_name)
             st.text(session_state.recipe_name)
             st.text("Showing recipes based on the following ingredients: {}".format(session_state.name))
             try:
@@ -81,12 +81,12 @@ def app():
                 status_text.text("Perfect, results are displayed in the graph")
                 updateGraph(clusterApi,session_state, session_state2, session_state3, sidebar, buttons)
 
-    if (session_state2.Buttonclicked == True and runButton == False):
+    elif (session_state2.Buttonclicked == True and runButton == False):
         if session_state2.button:
             print('start re-run')
 
-            print(session_state2.recipe_name)
-            print('re-run:' + session_state2.recipe_name)
+            # print(session_state2.recipe_name)
+            # print('re-run:' + session_state2.recipe_name)
             st.text(session_state2.recipe_name)
             st.text("Showing recipes based on the following ingredients: {}".format(session_state2.name))
             try:
@@ -98,14 +98,14 @@ def app():
             else:
                 clusterApi = result
                 status_text.text("Perfect, results are displayed in the graph")
-                updateGraph(clusterApi, session_state2, sidebar, buttons)
+                updateGraph(clusterApi, session_state, session_state2, session_state3, sidebar, buttons)
 
-    if (session_state3.Buttonclicked == True and runButton == False):
+    elif (session_state3.Buttonclicked == True and runButton == False):
         if session_state3.button:
             print('start re-run')
 
-            print(session_state3.recipe_name)
-            print('re-run:' + session_state3.recipe_name)
+            # print(session_state3.recipe_name)
+            # print('re-run:' + session_state3.recipe_name)
             st.text(session_state3.recipe_name)
             st.text("Showing recipes based on the following ingredients: {}".format(session_state3.name))
             try:
@@ -117,7 +117,7 @@ def app():
             else:
                 clusterApi = result
                 status_text.text("Perfect, results are displayed in the graph")
-                updateGraph(clusterApi, session_state3, sidebar, buttons)
+                updateGraph(clusterApi, session_state, session_state2, session_state3, sidebar, buttons)
 
     if runButton:
         st.text("Showing recipes based on the following ingredients: {}".format(userIngredientsInput))
