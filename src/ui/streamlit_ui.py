@@ -41,6 +41,9 @@ def app():
     #Set state
     ss = SessionState
     session_state = ss.get(name='', Buttonclicked=False, button='', recipe_name = '')
+    session_state2 = ss.get(name='', Buttonclicked=False, button='', recipe_name = '')
+    session_state3 = ss.get(name='', Buttonclicked=False, button='', recipe_name = '')
+
    
     userIngredientsInput = sidebar.text_input(label="Enter search terms", key="init")
 
@@ -51,7 +54,9 @@ def app():
     buttons = []
     button = st.empty()
     session_state.button = button
-    
+    session_state2.button = button
+    session_state3.button = button
+
     st.markdown("In the left sidebar enter keywords to search for similar recipes.\nNext select the number of recipes you would like returned, and click Run.\n"
             "A network of recipes to explore will appear below. The returned recipes are\nselected from a dataset of over 500,000 recipes. "
             "The recipes have been\nseparated into clusters based on common ingredients. Recipes are selected\nfrom the cluster most "
@@ -74,54 +79,89 @@ def app():
             else:
                 clusterApi = result 
                 status_text.text("Perfect, results are displayed in the graph")
-                updateGraph(clusterApi,session_state, sidebar, buttons)
-                    
-    #if session_state.Buttonclicked == False:
+                updateGraph(clusterApi,session_state, session_state2, session_state3, sidebar, buttons)
+
+    if (session_state2.Buttonclicked == True and runButton == False):
+        if session_state2.button:
+            print('start re-run')
+
+            print(session_state2.recipe_name)
+            print('re-run:' + session_state2.recipe_name)
+            st.text(session_state2.recipe_name)
+            st.text("Showing recipes based on the following ingredients: {}".format(session_state2.name))
+            try:
+                result = composeClusterApi(session_state2.name, userTopNRecipes)
+            except Exception:
+                st.write('No results Found.')
+            if result is None:
+                status_text.text("Did not find a user input, please add ingredients")
+            else:
+                clusterApi = result
+                status_text.text("Perfect, results are displayed in the graph")
+                updateGraph(clusterApi, session_state2, sidebar, buttons)
+
+    if (session_state3.Buttonclicked == True and runButton == False):
+        if session_state3.button:
+            print('start re-run')
+
+            print(session_state3.recipe_name)
+            print('re-run:' + session_state3.recipe_name)
+            st.text(session_state3.recipe_name)
+            st.text("Showing recipes based on the following ingredients: {}".format(session_state3.name))
+            try:
+                result = composeClusterApi(session_state3.name, userTopNRecipes)
+            except Exception:
+                st.write('No results Found.')
+            if result is None:
+                status_text.text("Did not find a user input, please add ingredients")
+            else:
+                clusterApi = result
+                status_text.text("Perfect, results are displayed in the graph")
+                updateGraph(clusterApi, session_state3, sidebar, buttons)
+
     if runButton:
         st.text("Showing recipes based on the following ingredients: {}".format(userIngredientsInput))
         result = composeClusterApi(userIngredientsInput, userTopNRecipes)
         session_state.Buttonclicked = True
+        session_state2.Buttonclicked = True
+        session_state3.Buttonclicked = True
         if result is None:
             status_text.text("Did not find a user input, please add ingredients")
         else:
             clusterApi = result
                     #session_state.name = 'onion'    
             status_text.text("Perfect, results are displayed in the graph")
-            updateGraph(clusterApi,session_state, sidebar, buttons)
+            updateGraph(clusterApi,session_state, session_state2, session_state3, sidebar, buttons)
                 
 
 
-def updateGraph(clusterApi, session_state, sidebar, button):
+def updateGraph(clusterApi, session_state, session_state2, session_state3, sidebar, button):
     recipeDf = clusterApi.clusterTopDf
     edgesDf = clusterApi.edgesDf
-    #st.write(recipeDf['RecipeIngredientParts'].tolist()[0])
+
     nodesAndWeights = clusterApi.nodesAndWeights
-    test = []
-    int = []
+
     nodes, edges, urlList, orderedNode  = getNodesEdges(recipeDf, edgesDf, nodesAndWeights)
  
     generateGraph(nodes,edges)
-    
-    #session_state.name = recipeDf[recipeDf.RecipeId == orderedNode.id].Name.tolist()[0]
-    #session_state.button = st.radio(label = "Test", options = ('Chicken', 'Beef'))
+
     col1, col2 = st.beta_columns((3, 3)) #columns for results list
-    with col1:    
+    col1.write('Click link below to go to recipe')
+    with col1:
         for i in range(len(urlList)):
             col1.write(urlList[i])
-    with col2: 
+    with col2:
+        col2.write('Click a button below to explote similar recipes')
         session_state.recipe_name = recipeDf[recipeDf.RecipeId == orderedNode[0][0]].Name.tolist()[0]
         session_state.name = recipeDf[recipeDf.RecipeId == orderedNode[0][0]].RecipeIngredientParts.tolist()[0]
-        session_state.button = col2.button("Explore Similar Options to Top Result")
-        #for i in range(len(orderedNode)):
-            #session_state.name = recipeDf['RecipeIngredientParts'].tolist()[i]
-        #    session_state.name = recipeDf['RecipeIngredientParts'].tolist()
-            #session_state.recipe_name = recipeDf['Name'].tolist()[i]
-        #    session_state.recipe_name = recipeDf['Name'].tolist()
-            #print(recipeDf['Name'].tolist()[i])
-            #test.append(col2.button("Explore Similar Options", key=str(i)))
-            #session_state.button = test
+        session_state.button = col2.button("Explore Options Similar to the Top Result", key=1)
+        session_state2.recipe_name = recipeDf[recipeDf.RecipeId == orderedNode[1][0]].Name.tolist()[0]
+        session_state2.name = recipeDf[recipeDf.RecipeId == orderedNode[1][0]].RecipeIngredientParts.tolist()[0]
+        session_state2.button = col2.button("Explore Options Similiar to 2nd Result", key=2)
+        session_state3.recipe_name = recipeDf[recipeDf.RecipeId == orderedNode[2][0]].Name.tolist()[0]
+        session_state3.name = recipeDf[recipeDf.RecipeId == orderedNode[2][0]].RecipeIngredientParts.tolist()[0]
+        session_state3.button = col2.button("Explore Options Similar to 3rd Result", key=3)
 
-    print(session_state.button)
             
 def generateGraph(nodes,edges): #,middle):
     # set network configuration
