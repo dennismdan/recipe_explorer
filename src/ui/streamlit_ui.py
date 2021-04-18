@@ -36,7 +36,11 @@ def app():
     st.title("Recipe Explorer Network")
     sidebar = st.sidebar
     sidebar.title("Enter ingredients or any food related words")
-    sidebar.text("The more detail you add to the\ningredients the better your\nresuls will be")
+    sidebar.markdown("Enter keywords to search for similar recipes. Next select the number of recipes you would like returned, and click Run. "
+            "A network of recipes to explore will appear below. The returned recipes are selected from a dataset of over 500,000 recipes. "
+            "The recipes have been separated into clusters based on common ingredients. Recipes are selected from the cluster most "
+            "representative of your search terms, bon appetite!")
+    # sidebar.text("The more detail you add to the\ningredients the better your\nresuls will be")
 
     #Set state
     ss = SessionState
@@ -56,11 +60,6 @@ def app():
     session_state.button = button
     session_state2.button = button
     session_state3.button = button
-
-    st.markdown("In the left sidebar enter keywords to search for similar recipes.\nNext select the number of recipes you would like returned, and click Run.\n"
-            "A network of recipes to explore will appear below. The returned recipes are\nselected from a dataset of over 500,000 recipes. "
-            "The recipes have been\nseparated into clusters based on common ingredients. Recipes are selected\nfrom the cluster most "
-            "representative of your search terms, bon appetite!")
     
     if (session_state.Buttonclicked == True and runButton == False):
         if session_state.button:
@@ -73,9 +72,11 @@ def app():
             try:
                 result = composeClusterApi(session_state.name, userTopNRecipes)
             except Exception:
-                st.write('No results Found.')
+                st.write('The ingredient combination did not yield any results, please try again.')
+                result = None
             if result is None:
-                status_text.text("Did not find a user input, please add ingredients")
+                status_text.text("The ingredient combination did not yield any results, please try again.")
+
             else:
                 clusterApi = result 
                 status_text.text("Perfect, results are displayed in the graph")
@@ -92,9 +93,10 @@ def app():
             try:
                 result = composeClusterApi(session_state2.name, userTopNRecipes)
             except Exception:
-                st.write('No results Found.')
+                st.write('The ingredient combination did not yield any results, please try again.')
+                result = None
             if result is None:
-                status_text.text("Did not find a user input, please add ingredients")
+                status_text.text("The ingredient combination did not yield any results, please try again.")
             else:
                 clusterApi = result
                 status_text.text("Perfect, results are displayed in the graph")
@@ -111,9 +113,10 @@ def app():
             try:
                 result = composeClusterApi(session_state3.name, userTopNRecipes)
             except Exception:
-                st.write('No results Found.')
+                st.write('The ingredient combination did not yield any results, please try again.')
+                result = None
             if result is None:
-                status_text.text("Did not find a user input, please add ingredients")
+                status_text.text("The ingredient combination did not yield any results, please try again.")
             else:
                 clusterApi = result
                 status_text.text("Perfect, results are displayed in the graph")
@@ -121,17 +124,24 @@ def app():
 
     if runButton:
         st.text("Showing recipes based on the following ingredients: {}".format(userIngredientsInput))
-        result = composeClusterApi(userIngredientsInput, userTopNRecipes)
+        try:
+            result = composeClusterApi(userIngredientsInput, userTopNRecipes)
+        except Exception:
+            st.write('The ingredient combination did not yield any results, please try again.')
+            result = None
         session_state.Buttonclicked = True
         session_state2.Buttonclicked = True
         session_state3.Buttonclicked = True
         if result is None:
-            status_text.text("Did not find a user input, please add ingredients")
+            status_text.text("The ingredient combination did not yield any results, please try again.")
         else:
             clusterApi = result
                     #session_state.name = 'onion'    
             status_text.text("Perfect, results are displayed in the graph")
-            updateGraph(clusterApi,session_state, session_state2, session_state3, sidebar, buttons)
+            try:
+                updateGraph(clusterApi,session_state, session_state2, session_state3, sidebar, buttons)
+            except:
+                st.text("The ingredient combination did not yield any results, please try again.")
                 
 
 
@@ -147,6 +157,7 @@ def updateGraph(clusterApi, session_state, session_state2, session_state3, sideb
 
     col1, col2 = st.beta_columns((3, 3)) #columns for results list
     col1.write('Click a link below to go to recipe')
+
     with col1:
         for i in range(len(urlList)):
             col1.write(urlList[i])
@@ -165,7 +176,7 @@ def updateGraph(clusterApi, session_state, session_state2, session_state3, sideb
             
 def generateGraph(nodes,edges): #,middle):
     # set network configuration
-    config = Config(height=500,
+    config = Config(height=250,
                     width=800,
                     nodeHighlightBehavior=True,
                     highlightColor="#d9a0d7",
@@ -175,7 +186,6 @@ def generateGraph(nodes,edges): #,middle):
                     link={'labelProperty': 'label', 'renderLabel': False}
                     )
     # add network to middle column of streamlit canvas
- 
     return_value = agraph(nodes=nodes,
                               edges=edges,
                               config=config)
@@ -221,7 +231,12 @@ def getNodesEdges(recipeDf,edgesDf,nodeList):
         urlList.append(link)
         orderedNode.append((id, nodeSize))
         try:
-            nodes.append(Node(id = int(id), label = label.replace('&amp;', '&'), size = int(nodeSize)))
+            if nodeSize != None and id != None:
+                nodes.append(Node(id = int(id), label = label.replace('&amp;', '&'), size = int(nodeSize)))
+            else:
+                nodeSize == 0.01
+                nodes.append(Node(id=int(id), label=label.replace('&amp;', '&'), size=int(nodeSize)))
+
         except:
             print('Null value returned')
             raise
