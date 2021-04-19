@@ -51,7 +51,7 @@ class ClusterAPI:
         self.rawUserInput:str = stringInput
         self.userIngredientInput:List[str] = self.cleanUserInput(self.rawUserInput)
         self.pathToModel = pipelineFilePath
-        self.fullDf: pd.DataFrame = pd.read_csv(fullDataFilePath, header=0, sep=',',skipfooter = 1)
+        self.fullDf: pd.DataFrame = pd.read_csv(fullDataFilePath, header=0, sep=',')
         self.pipelineMode:Pipeline = self.getModel(self.pathToModel)
         self.returnRecipeCount: int = topNrRecipes
 
@@ -144,7 +144,7 @@ class ClusterAPI:
 
         return self.clusterTopDf
 
-    def getEdgesDf(self, df:pd.DataFrame = None)->pd.DataFrame:
+    def setNodeSizes(self, df:pd.DataFrame = None)->pd.DataFrame:
         """
         :param df:subset of data belonging to a cluster
         :return: df as a nodal graph with nodeIdA and nodeIdB with edge_weights
@@ -199,9 +199,6 @@ class ClusterAPI:
         edgesDf["recipeIdA"] = edgesDf.recipeIdA.apply(lambda x: ids[x])
         edgesDf["recipeIdB"] = edgesDf.recipeIdB.apply(lambda x: ids[x])
 
-        self.edgesDf = edgesDf.copy() # save results to the class attribute
-
-
         df1 = edgesDf[["recipeIdA", "edge_weight"]].rename(columns={"recipeIdA": "RecipeId","edge_weight":"nodeSize"})
         df2 = edgesDf[["recipeIdB", "edge_weight"]].rename(columns={"recipeIdB": "RecipeId","edge_weight":"nodeSize"})
 
@@ -210,6 +207,64 @@ class ClusterAPI:
         nodeSizes["nodeSize"] = scaler.fit_transform(nodeSizes[["nodeSize"]]).round(2)
 
         self.nodesAndWeights = nodeSizes
+
+        return
+
+    def getEdgesDf(self, df:pd.DataFrame = None)->pd.DataFrame:
+        """
+        :param df:subset of data belonging to a cluster
+        :return: df as a nodal graph with nodeIdA and nodeIdB with edge_weights
+        """
+
+        if df is None and self.clusterTopDf is not None:
+            df = self.clusterTopDf
+        elif df is None:
+            print("")
+            NoClusterDfError("No dataframe for cluster defined. "
+                             "Call methods getClusterTopData() to create the dataframe first")
+        else:
+            print("dataframe passed to function")
+
+
+        corpus = df["Keywords"].tolist()
+        ids = df["RecipeId"].tolist()
+        ids = [int(id_) for id_ in ids]
+
+        #create the sparse matrix
+        vectorizer = TfidfVectorizer(stop_words={'english'},use_idf=True)
+        vectorizorModel = vectorizer.fit(corpus)
+        X = vectorizorModel.transform(corpus) # top selected
+
+        #multiply to get the correlations
+        nodalSparseGraph = X @ X.T
+        nodalSparseGraph = np.array(nodalSparseGraph.todense())
+
+        #extract only lower triangle to reduce repeating endges
+        nodalGraph = np.tril(nodalSparseGraph,k=-1) #sets diag =0 also
+        shape = nodalGraph.shape
+
+        coordinates = {"recipeIdA": [], "recipeIdB": [], "edge_weight": []}
+        for row in range(shape[0]):
+            for col in range(shape[1]):
+                weight = nodalGraph[row][col]
+                if weight > 0:
+                    coordinates["recipeIdA"].append(row)
+                    coordinates["recipeIdB"].append(col)
+                    coordinates["edge_weight"].append(weight)
+
+
+        #place values into pandas
+        edgesDf = pd.DataFrame(coordinates)
+
+        #normalize weights from 0 to 1
+        scaler = MinMaxScaler()
+        edgesDf["edge_weight"] = scaler.fit_transform(edgesDf[["edge_weight"]])
+        edgesDf["edge_weight"] = edgesDf["edge_weight"].round(2)
+        #reformat to pandas and assign back the recipe ids
+        edgesDf["recipeIdA"] = edgesDf.recipeIdA.apply(lambda x: ids[x])
+        edgesDf["recipeIdB"] = edgesDf.recipeIdB.apply(lambda x: ids[x])
+
+        self.edgesDf = edgesDf.copy() # save results to the class attribute
 
         return self.edgesDf
 
@@ -225,8 +280,9 @@ class ClusterAPI:
         self.getClusterData(clusterNr)
 
         dfTop = self.getClusterTopData(returnRecipeCount)
-
+        self.setNodeSizes(dfTop)
         edgesDf = self.getEdgesDf(dfTop)
+
 
         return dfTop,edgesDf,clusterNr
 
@@ -238,6 +294,7 @@ class ClusterAPI:
 
 
         dfTop = self.getClusterTopData(returnRecipeCount)
+        self.setNodeSizes(dfTop)
         edgesDf = self.getEdgesDf(dfTop)
 
         return dfTop,edgesDf

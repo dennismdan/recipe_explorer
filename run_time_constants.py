@@ -13,7 +13,7 @@ print("data file path: ",data)
 pipelineFileName = "pipeline_k150.sav"
 fullDataFileName = "recipe_clusters.csv"
 
-pipelineFilePath = os.path.join(models,"pipeline_k150.sav")
+pipelineFilePath = os.path.join(models,"kmeans_pipeline_k1000.sav")
 
 #------------> place the data file right outside root directory so the structure looks like this:
 # -somefolder

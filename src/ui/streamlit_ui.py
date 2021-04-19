@@ -15,6 +15,11 @@ from streamlit_agraph import agraph, Node, Edge, TripleStore, Config
 from pyvis.network import Network
 
 from ..backend.cluster_api import ClusterAPI
+import matplotlib
+from matplotlib import cm
+cmapNode = matplotlib.cm.get_cmap('rainbow')
+cmapEdge = matplotlib.cm.get_cmap('Blues')
+edgeWeight = 3
 
 topNrRecipes = 10
 
@@ -232,22 +237,32 @@ def getNodesEdges(recipeDf,edgesDf,nodeList):
         orderedNode.append((id, nodeSize))
         try:
             if nodeSize != None and id != None:
-                nodes.append(Node(id = int(id), label = label.replace('&amp;', '&'), size = int(nodeSize)))
+                nodes.append(Node(id = int(id),
+                                  color = matplotlib.colors.rgb2hex(cmapNode(nodeSize)),
+                                  label = label.replace('&amp;', '&'),
+                                  size = int(nodeSize)))
             else:
                 nodeSize == 0.01
-                nodes.append(Node(id=int(id), label=label.replace('&amp;', '&'), size=int(nodeSize)))
+                nodes.append(Node(id=int(id),
+                                  color=matplotlib.colors.rgb2hex(cmapNode(nodeSize)),
+                                  label=label.replace('&amp;', '&'),
+                                  size=int(nodeSize)))
 
         except:
             print('Null value returned')
             raise
             st.stop()    
             st.warning('An error has occured. Please try again.')
-    edgesDf["edge_weight"] = 1#((edgesDf["edge_weight"] - edgesDf["edge_weight"].min()) / (edgesDf["edge_weight"].max() - edgesDf["edge_weight"].min())) * 5
+    edgesDf["color_index"] = edgesDf["edge_weight"]
+    #edgesDf["edge_weight"] = 1
+
     for index, row in edgesDf.iterrows():
         if [int(row["recipeIdB"]), int(row["recipeIdA"])] not in existingEdges:
             existingEdges.append([int(row["recipeIdA"]),int(row["recipeIdB"])])
-            edges.append(Edge(source=int(row["recipeIdA"]), target=int(row["recipeIdB"]),strokeWidth = int(row["edge_weight"]), type="STRAIGHT"))
-        
+            edges.append(Edge(source=int(row["recipeIdA"]), target=int(row["recipeIdB"]),
+                              color = matplotlib.colors.rgb2hex(cmapEdge(row["color_index"])),
+                              strokeWidth = int(row["edge_weight"]*edgeWeight),
+                              type="STRAIGHT"))
     return nodes,edges, urlList, orderedNode
 
 
