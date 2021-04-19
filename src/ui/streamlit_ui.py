@@ -240,7 +240,7 @@ def getNodesEdges(recipeDf,edgesDf,nodeList):
                 nodes.append(Node(id = int(id),
                                   color = matplotlib.colors.rgb2hex(cmapNode(nodeSize)),
                                   label = label.replace('&amp;', '&'),
-                                  size = int(nodeSize)))
+                                  size = nodeSize))
             else:
                 nodeSize == 0.01
                 nodes.append(Node(id=int(id),
