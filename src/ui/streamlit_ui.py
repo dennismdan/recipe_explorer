@@ -17,9 +17,10 @@ from pyvis.network import Network
 from ..backend.cluster_api import ClusterAPI
 import matplotlib
 from matplotlib import cm
-cmapNode = matplotlib.cm.get_cmap('rainbow')
+cmapNode = matplotlib.cm.get_cmap('Greens')
 cmapEdge = matplotlib.cm.get_cmap('Blues')
 edgeWeight = 3
+nodeSizeWeight = 1200
 
 topNrRecipes = 10
 
@@ -58,7 +59,7 @@ def app():
 
     userTopNRecipes = sidebar.selectbox(label="Choose number of recipes to return", options=[3,5,10,15], index=1)
     runButton = sidebar.button("Run")
-    status_text = sidebar.text("enter inputs and run")
+    status_text = sidebar.write("enter inputs and run")
     graph = st.beta_columns((5))
     buttons = []
     button = st.empty()
@@ -72,8 +73,8 @@ def app():
            
             # print(session_state.recipe_name)
             # print('re-run:' + session_state.recipe_name)
-            st.text(session_state.recipe_name)
-            st.text("Showing recipes based on the following ingredients: {}".format(session_state.name))
+            st.write(session_state.recipe_name)
+            st.write("Showing recipes based on the following ingredients: {}".format(session_state.name))
             try:
                 result = composeClusterApi(session_state.name, userTopNRecipes)
             except Exception:
@@ -93,8 +94,8 @@ def app():
 
             # print(session_state2.recipe_name)
             # print('re-run:' + session_state2.recipe_name)
-            st.text(session_state2.recipe_name)
-            st.text("Showing recipes based on the following ingredients: {}".format(session_state2.name))
+            st.write(session_state2.recipe_name)
+            st.write("Showing recipes based on the following ingredients: {}".format(session_state2.name))
             try:
                 result = composeClusterApi(session_state2.name, userTopNRecipes)
             except Exception:
@@ -104,7 +105,7 @@ def app():
                 status_text.text("The ingredient combination did not yield any results, please try again.")
             else:
                 clusterApi = result
-                status_text.text("Perfect, results are displayed in the graph")
+                status_text.write("Perfect, results are displayed in the graph")
                 updateGraph(clusterApi, session_state, session_state2, session_state3, sidebar, buttons)
 
     elif (session_state3.Buttonclicked == True and runButton == False):
@@ -113,22 +114,22 @@ def app():
 
             # print(session_state3.recipe_name)
             # print('re-run:' + session_state3.recipe_name)
-            st.text(session_state3.recipe_name)
-            st.text("Showing recipes based on the following ingredients: {}".format(session_state3.name))
+            st.write(session_state3.recipe_name)
+            st.write("Showing recipes based on the following ingredients: {}".format(session_state3.name))
             try:
                 result = composeClusterApi(session_state3.name, userTopNRecipes)
             except Exception:
                 st.write('The ingredient combination did not yield any results, please try again.')
                 result = None
             if result is None:
-                status_text.text("The ingredient combination did not yield any results, please try again.")
+                status_text.write("The ingredient combination did not yield any results, please try again.")
             else:
                 clusterApi = result
-                status_text.text("Perfect, results are displayed in the graph")
+                status_text.write("Perfect, results are displayed in the graph")
                 updateGraph(clusterApi, session_state, session_state2, session_state3, sidebar, buttons)
 
     if runButton:
-        st.text("Showing recipes based on the following ingredients: {}".format(userIngredientsInput))
+        st.write("Showing recipes based on the following ingredients: {}".format(userIngredientsInput))
         try:
             result = composeClusterApi(userIngredientsInput, userTopNRecipes)
         except Exception:
@@ -138,15 +139,15 @@ def app():
         session_state2.Buttonclicked = True
         session_state3.Buttonclicked = True
         if result is None:
-            status_text.text("The ingredient combination did not yield any results, please try again.")
+            status_text.write("The ingredient combination did not yield any results, please try again.")
         else:
             clusterApi = result
                     #session_state.name = 'onion'    
-            status_text.text("Perfect, results are displayed in the graph")
+            status_text.write("Perfect, results are displayed in the graph")
             try:
                 updateGraph(clusterApi,session_state, session_state2, session_state3, sidebar, buttons)
             except:
-                st.text("The ingredient combination did not yield any results, please try again.")
+                st.write("The ingredient combination did not yield any results, please try again.")
                 
 
 
@@ -167,7 +168,7 @@ def updateGraph(clusterApi, session_state, session_state2, session_state3, sideb
         for i in range(len(urlList)):
             col1.write(urlList[i])
     with col2:
-        col2.write('Click a button below to explore similar recipes')
+        col2.text('Click a button below to explore similar recipes')
         session_state.recipe_name = recipeDf[recipeDf.RecipeId == orderedNode[0][0]].Name.tolist()[0]
         session_state.name = recipeDf[recipeDf.RecipeId == orderedNode[0][0]].RecipeIngredientParts.tolist()[0]
         session_state.button = col2.button("Explore Options Similar to the Top Result", key=1)#the Top Result
@@ -221,13 +222,15 @@ def getNodesEdges(recipeDf,edgesDf,nodeList):
     existingEdges =[]
     urlList = []
     orderedNode = []
-    nodeList["nodeSize"] = ((nodeList["nodeSize"] - nodeList["nodeSize"].min()) / (nodeList["nodeSize"].max() - nodeList["nodeSize"].min())) * 1500
+    nodeList["nodeColor"] = nodeList["nodeSize"]
+    nodeList["nodeSize"] = nodeList["nodeSize"] * nodeSizeWeight
     nodeList.sort_values(by="nodeSize", ascending=False, inplace=True)
     nodeList.reset_index(drop=True, inplace=True)
     for index,row in nodeList.iterrows():
 
         id = int(row["RecipeId"])
         nodeSize = row["nodeSize"]
+        nodeColor = row["nodeColor"]
         label = recipeDf[recipeDf.RecipeId == id].Name.tolist()[0]
         url = "https://www.food.com/recipe/{}".format(str(id))
         link = '[{}]({})'.format(label, url)
@@ -235,24 +238,28 @@ def getNodesEdges(recipeDf,edgesDf,nodeList):
         label = label.replace('&quot;', '"')
         urlList.append(link)
         orderedNode.append((id, nodeSize))
+
         try:
             if nodeSize != None and id != None:
                 nodes.append(Node(id = int(id),
-                                  color = matplotlib.colors.rgb2hex(cmapNode(nodeSize)),
+                                  color = matplotlib.colors.rgb2hex(cmapNode(nodeColor)),
                                   label = label.replace('&amp;', '&'),
+                                  strokeColor= "black",
                                   size = nodeSize))
             else:
-                nodeSize == 0.01
+                #nodeSize == 0.01
                 nodes.append(Node(id=int(id),
-                                  color=matplotlib.colors.rgb2hex(cmapNode(nodeSize)),
+                                  color=matplotlib.colors.rgb2hex(cmapNode(nodeColor)),
                                   label=label.replace('&amp;', '&'),
-                                  size=int(nodeSize)))
+                                  strokeColor="black",
+                                  size=nodeSize))
 
         except:
             print('Null value returned')
             raise
             st.stop()    
             st.warning('An error has occured. Please try again.')
+
     edgesDf["color_index"] = edgesDf["edge_weight"]
     #edgesDf["edge_weight"] = 1
 

@@ -269,17 +269,14 @@ class ClusterAPI:
         return self.edgesDf
 
     def topRecipeData(self)->Tuple[pd.DataFrame,pd.DataFrame,int]:
-
         model = self.pipelineMode
-
         newRecipe = self.userIngredientInput
         returnRecipeCount = self.returnRecipeCount
-
         clusterNr = self.predictCluster(model, newRecipe)
-
         self.getClusterData(clusterNr)
 
         dfTop = self.getClusterTopData(returnRecipeCount)
+
         self.setNodeSizes(dfTop)
         edgesDf = self.getEdgesDf(dfTop)
 
