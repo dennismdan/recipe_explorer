@@ -1,19 +1,19 @@
-1. DESCRIPTION 
+## 1. DESCRIPTION 
 
-The recipe explorere presents users a novel way to explore recipes in the following way:
-	a. Input a set of ingredients into the text box
-	b. Select how many recipes to return
-	c. Click run, and wait for results
-	d. The user can explore the returned recipes by going to the 		recipe home paige with all the instructions and 				ingredients.
-	e. Users can then continue their discovery journey by 				selecting one of the returned recipes as input for new 		recipe recomendatoins.  
+The recipe explorere presents users a novel way to explore recipes in the following way: 
+* Input a set of ingredients into the text box
+* Select how many recipes to return
+* Click run, and wait for results
+* The user can explore the returned recipes by going to the recipe home paige with all the instructions and ingredients.
+* Users can then continue their discovery journey by selecting one of the returned recipes as input for new recipe recomendatoins.  
 
 
-2. INSTALLATION
+## 2. INSTALLATION
 
 To run this application you will need to things:
 
-a. Application files:
-Install the application from github and run locally on your machine. Python dependencies are recorded in the 	requirements.txt
+#### a. Application files:
+Install the application from github and run locally on your machine. Python dependencies are recorded in the requirements.txt
 
 A web application will be life for a limited amount of time for users to explore the application. 
 
@@ -22,9 +22,9 @@ Here is the link:
 ******* add link to webapp ********
 
 
-b. Data file: 
+#### b. Data file: 
 
-	Datafile is a siple csv called recipe_clusters.csv and 	with about 320k recipes to pull from for the 	application. The file is too big in size to be stored 	on github and will need to be loaded separatelly. 	
+Datafile is a siple csv called recipe_clusters.csv and 	with about 320k recipes to pull from for the application. The file is too big in size to be stored on github and will need to be loaded separatelly. 	
 	
 	Download it from here:  
 	******* add link to datafile ********
@@ -47,7 +47,7 @@ b. Data file:
 
 
 
-3. EXECUTION
+## 3. EXECUTION
 
 When the application is installed on a local machine, users will first need to install streamlit with the following command:  pip 
 
@@ -62,5 +62,5 @@ Once you have streamlit installed, open a command propt window inside the root d
 
 streamlit run main.py
 
-4. DEMO VIDEO
+## 4. DEMO VIDEO
 
