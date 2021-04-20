@@ -59,7 +59,8 @@ def app():
 
     userTopNRecipes = sidebar.selectbox(label="Choose number of recipes to return", options=[3,5,10,15], index=1)
     runButton = sidebar.button("Run")
-    status_text = sidebar.write("enter inputs and run")
+    status_text = sidebar.text("enter inputs and run")
+
     graph = st.beta_columns((5))
     buttons = []
     button = st.empty()
@@ -73,7 +74,7 @@ def app():
            
             # print(session_state.recipe_name)
             # print('re-run:' + session_state.recipe_name)
-            st.write(session_state.recipe_name)
+            st.write("Recipe name: "+session_state.recipe_name)
             st.write("Showing recipes based on the following ingredients: {}".format(session_state.name))
             try:
                 result = composeClusterApi(session_state.name, userTopNRecipes)
@@ -81,11 +82,11 @@ def app():
                 st.write('The ingredient combination did not yield any results, please try again.')
                 result = None
             if result is None:
-                status_text.text("The ingredient combination did not yield any results, please try again.")
+                status_text.write("The ingredient combination did not yield any results, please try again.")
 
             else:
                 clusterApi = result 
-                status_text.text("Perfect, results are displayed in the graph")
+                status_text.write("Perfect, results are displayed in the graph")
                 updateGraph(clusterApi,session_state, session_state2, session_state3, sidebar, buttons)
 
     elif (session_state2.Buttonclicked == True and runButton == False):
@@ -94,7 +95,7 @@ def app():
 
             # print(session_state2.recipe_name)
             # print('re-run:' + session_state2.recipe_name)
-            st.write(session_state2.recipe_name)
+            st.write("Recipe name: "+session_state2.recipe_name)
             st.write("Showing recipes based on the following ingredients: {}".format(session_state2.name))
             try:
                 result = composeClusterApi(session_state2.name, userTopNRecipes)
@@ -102,7 +103,7 @@ def app():
                 st.write('The ingredient combination did not yield any results, please try again.')
                 result = None
             if result is None:
-                status_text.text("The ingredient combination did not yield any results, please try again.")
+                status_text.write("The ingredient combination did not yield any results, please try again.")
             else:
                 clusterApi = result
                 status_text.write("Perfect, results are displayed in the graph")
@@ -114,7 +115,7 @@ def app():
 
             # print(session_state3.recipe_name)
             # print('re-run:' + session_state3.recipe_name)
-            st.write(session_state3.recipe_name)
+            st.write("Recipe name: ",session_state3.recipe_name)
             st.write("Showing recipes based on the following ingredients: {}".format(session_state3.name))
             try:
                 result = composeClusterApi(session_state3.name, userTopNRecipes)
@@ -168,7 +169,7 @@ def updateGraph(clusterApi, session_state, session_state2, session_state3, sideb
         for i in range(len(urlList)):
             col1.write(urlList[i])
     with col2:
-        col2.text('Click a button below to explore similar recipes')
+        col2.write('Click a button below to explore similar recipes')
         session_state.recipe_name = recipeDf[recipeDf.RecipeId == orderedNode[0][0]].Name.tolist()[0]
         session_state.name = recipeDf[recipeDf.RecipeId == orderedNode[0][0]].RecipeIngredientParts.tolist()[0]
         session_state.button = col2.button("Explore Options Similar to the Top Result", key=1)#the Top Result
