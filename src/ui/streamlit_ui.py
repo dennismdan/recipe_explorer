@@ -40,6 +40,8 @@ def app():
    
     # Set title and user input elements
     st.title("Recipe Explorer Network")
+    st.write("Edge Width - degree of keyword similarity (ex: soup, vegan, breakfast)")
+    st.write("Node Size - degree of ingredient  similarity (ex: chicken, pepper, tomatoes)")
     sidebar = st.sidebar
     sidebar.title("Enter ingredients or any food related words")
     sidebar.markdown("Enter keywords to search for similar recipes. Next select the number of recipes you would like returned, and click Run. "
