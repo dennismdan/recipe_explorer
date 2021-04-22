@@ -44,8 +44,12 @@ def app():
     st.write("Node Size - degree of ingredient  similarity (ex: chicken, pepper, tomatoes)")
     sidebar = st.sidebar
     sidebar.title("Enter ingredients or any food related words")
-    sidebar.markdown("Enter keywords to search for similar recipes. Next select the number of recipes you would like returned, and click Run. "
-            "A network of recipes to explore will appear below. The returned recipes are selected from a dataset of over 500,000 recipes. "
+    sidebar.markdown(""
+                     "1. Enter ingredients to search for similar recipes.<br/> "
+                     "2. Next select the number of recipes you would like returned.<br/>"
+                     "3. Click Run. <br /> "
+                     "NOTE: A network of recipes to explore will appear below. "
+                     "The returned recipes are selected from a dataset of over 300,000 recipes. "
             "The recipes have been separated into clusters based on common ingredients. Recipes are selected from the cluster most "
             "representative of your search terms, bon appetite!")
     # sidebar.text("The more detail you add to the\ningredients the better your\nresuls will be")
