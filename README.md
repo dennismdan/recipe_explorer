@@ -1,3 +1,7 @@
+
+![image](https://user-images.githubusercontent.com/7568793/116161536-e96bff00-a6c1-11eb-8a62-946addbb24c0.png)
+
+
 ## 1. DESCRIPTION 
 
 The recipe explorere presents users a novel way to explore recipes in the following way: 
