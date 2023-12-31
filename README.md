@@ -2,6 +2,8 @@
 ![image](https://user-images.githubusercontent.com/7568793/116161536-e96bff00-a6c1-11eb-8a62-946addbb24c0.png)
 
 
+![body_measurements](https://github.com/dennismdan/recipe_explorer/assets/7568793/21328f01-ef12-4a0a-bea9-9021f728e275)
+
 ## 1. DESCRIPTION 
 
 The recipe explorere presents users a novel way to explore recipes in the following way: 
